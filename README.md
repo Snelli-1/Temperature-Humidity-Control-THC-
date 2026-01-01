@@ -215,3 +215,34 @@ EEPROM: https://www.arduino.cc/en/Reference/EEPROM
 LCD tutorial: https://www.arduino.cc/en/Tutorial/HelloWorld
 LCD tutorial:
 🔗 https://www.arduino.cc/en/Tutorial/HelloWorld
+
+
+Percentage of Original Project Preserved
+This updated version is based on the original temperature‑driven fan project by Enrico Simonetti. Most of the wiring remains identical to the original design. Only one wiring change was required to make the system compatible with modern libraries and the updated code.
+
+Wiring preserved from the original project: about 95%
+All wiring is the same except for one pin change.
+
+Actual wiring change:
+
+Original project: DHT sensor on A0
+
+Updated project: DHT sensor on D8  
+Everything else in the wiring remains identical.
+
+Original concept and idea: about 40%
+The purpose of controlling temperature with relays is unchanged.
+
+Original wiring logic: about 95%
+Only the DHT pin changed. All other wiring matches the original project.
+
+Original code structure: about 10%
+The old structure no longer works with modern libraries. Only the general sequence (read sensor → update display → control relays) remains.
+
+Original code lines reused: about 5%
+Most code had to be rewritten because the DHT library API changed, LiquidCrystal timing changed, EasyButton requires a different approach, EEPROM handling needed offset logic, and the old fast loop caused display flicker.
+
+Overall original content preserved: about 25%
+The wiring is mostly original, but the logic, timing, libraries, and stability features are almost entirely new.
+
+Summary: the project is roughly 25% original and 75% modernized, rewritten, or expanded.
