@@ -1,6 +1,8 @@
 # Temperature-Humidity-Control-THC-
 A modern temperature and humidity controller for cooling systems, built on Arduino Nano with updated libraries. Provides stable DHT11 readings, flicker‑free LCD output, relay control, EEPROM‑saved setpoints, and reliable sequential timing. Designed for beginners reviving the older Arduino project.
 
+YouTube demonstration video:
+https://www.youtube.com/shorts/djUbr9WUUEY
 
 Step‑by‑Step Guide (Plain Text Version)
 This guide explains how to build, wire, upload, and test the updated temperature and humidity controller using modern Arduino tools and libraries.
