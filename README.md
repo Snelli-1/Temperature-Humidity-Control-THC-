@@ -2,6 +2,27 @@
 A modern temperature and humidity controller for cooling systems, built on Arduino Nano with updated libraries. Provides stable DHT11 readings, flicker‑free LCD output, relay control, EEPROM‑saved setpoints, and reliable sequential timing. Designed for beginners reviving the older Arduino project.
 
 <img width="800" height="677" alt="image" src="https://github.com/user-attachments/assets/58ba843e-809a-4ae6-b3f9-71b7cf7af34e" />
+Here are the Library Manager names to search + the preferred official links:
+Built-in (no install needed)
+
+EEPROM — EEPROM (built-in Arduino library)
+Link: Arduino EEPROM Library docs [docs.arduino.cc]
+LiquidCrystal — LiquidCrystal (often included with Arduino IDE)
+Link: Arduino LiquidCrystal library docs [docs.arduino.cc]
+
+Install via Arduino Library Manager
+
+EasyButton — search: EasyButton (by Evert Arias)
+Links: Arduino library page  • Official GitHub [docs.arduino.cc] [github.com]
+Adafruit Unified Sensor — search: Adafruit Unified Sensor (provides <Adafruit_Sensor.h>)
+Links: Arduino library page  • Official GitHub [docs.arduino.cc] [github.com]
+DHT sensor library — search: DHT sensor library (provides <DHT.h> and <DHT_U.h>)
+Link: Official GitHub [github.com]
+
+Don’t install (deprecated)
+
+Adafruit_DHT_Unified — deprecated/merged into DHT sensor library
+Link: Deprecated repo notice [github.com], [github.com]
 
 YouTube demonstration video:
 https://www.youtube.com/shorts/djUbr9WUUEY
