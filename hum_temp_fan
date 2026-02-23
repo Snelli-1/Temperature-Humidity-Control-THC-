@@ -1,5 +1,4 @@
 #include <EEPROM.h>
-#include <EasyButton.h>
 #include <LiquidCrystal.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
@@ -12,16 +11,11 @@ DHT dht(DHT_PIN, DHTTYPE);
 
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
-// Buttons
+// Buttons (ACTIVE HIGH: PIN -- button -- +5V, external pulldown resistor)
 const int BTN_T_UP   = 10;
 const int BTN_T_DOWN = 11;
 const int BTN_H_UP   = 12;
 const int BTN_H_DOWN = 13;
-
-EasyButton bTup(BTN_T_UP);
-EasyButton bTdn(BTN_T_DOWN);
-EasyButton bHup(BTN_H_UP);
-EasyButton bHdn(BTN_H_DOWN);
 
 // Relays
 const int RELAY1 = 14; // A0
@@ -41,9 +35,9 @@ const int EEPROM_H_ADDR = 1;
 const int T_OFFSET = 20;   // -20..60 → 0..80
 
 // -------------------- Timing --------------------
-unsigned long lastSensor = 0;
+unsigned long lastSensor  = 0;
 unsigned long lastProcess = 0;
-unsigned long lastLCD = 0;
+unsigned long lastLCD     = 0;
 
 const unsigned long SENSOR_MS  = 3000;
 const unsigned long PROCESS_MS = 500;
@@ -54,66 +48,91 @@ float curT = NAN;
 float curH = NAN;
 bool haveValidReading = false;
 
-// -------------------- Button state machine --------------------
-struct BtnState {
-  bool prev;
-  bool held;
-  unsigned long start;
-  unsigned long lastRpt;
+// ========================================
+// Robust button handling for ACTIVE HIGH
+// - One short press = exactly one step (on PRESS edge)
+// - Long press repeat starts after 1s
+// - Strong debounce for real hardware
+// ========================================
+const unsigned long DEBOUNCE_MS   = 60;     // kicsit erősebb, hogy a pattogás ne csináljon 5 élt
+const unsigned long LONG_START_MS = 1000;   // 1s után indul a repeat
+const unsigned long REPEAT_MS     = 180;    // ismétlés sebesség (állítható)
+
+struct Button {
+  int pin;
+
+  bool raw;                  // pillanatnyi olvasás (pressed? true/false)
+  bool stable;               // debounced állapot
+  unsigned long rawChangedAt;
+
+  bool pressed;              // stable == true (HIGH)
+  unsigned long nextRepeatAt;
 };
 
-BtnState stTup = {false,false,0,0};
-BtnState stTdn = {false,false,0,0};
-BtnState stHup = {false,false,0,0};
-BtnState stHdn = {false,false,0,0};
+Button bTup = {BTN_T_UP,   false, false, 0, false, 0};
+Button bTdn = {BTN_T_DOWN, false, false, 0, false, 0};
+Button bHup = {BTN_H_UP,   false, false, 0, false, 0};
+Button bHdn = {BTN_H_DOWN, false, false, 0, false, 0};
 
-const unsigned long LONG_PRESS_MS = 1000;
-const unsigned long REPEAT_MS     = 500;
+// returns true exactly when ONE step should occur
+bool processButton(Button &b, unsigned long now) {
+  bool step = false;
 
-bool handleButton(BtnState &st, bool pressed, unsigned long now) {
-  bool act = false;
+  // ACTIVE HIGH: pressed when digitalRead == HIGH
+  bool r = (digitalRead(b.pin) == HIGH);
 
-  if (pressed && !st.prev) {
-    st.start = now;
-    st.lastRpt = now;
-    st.held = false;
-  }
-  else if (pressed && st.prev) {
-    if (!st.held && (now - st.start >= LONG_PRESS_MS)) {
-      st.held = true;
-      act = true;
-      st.lastRpt = now;
-    }
-    else if (st.held && (now - st.lastRpt >= REPEAT_MS)) {
-      act = true;
-      st.lastRpt += REPEAT_MS;
-    }
-  }
-  else if (!pressed && st.prev) {
-    if (!st.held && (now - st.start < LONG_PRESS_MS)) {
-      act = true;
-    }
-    st.held = false;
+  if (r != b.raw) {
+    b.raw = r;
+    b.rawChangedAt = now;
   }
 
-  st.prev = pressed;
-  return act;
+  // Debounce: accept a state change only if stable for DEBOUNCE_MS
+  if ((now - b.rawChangedAt) >= DEBOUNCE_MS) {
+    if (b.stable != b.raw) {
+      b.stable = b.raw;
+
+      // PRESS edge (becomes HIGH)
+      if (b.stable) {
+        b.pressed = true;
+
+        // short press: EXACTLY one step on press
+        step = true;
+
+        // long press: start repeating after 1s
+        b.nextRepeatAt = now + LONG_START_MS;
+      }
+      // RELEASE edge (becomes LOW)
+      else {
+        b.pressed = false;
+      }
+    }
+  }
+
+  // While held: long press repeat (no "burst catch-up")
+  if (b.pressed && b.stable) {
+    if (now >= b.nextRepeatAt) {
+      step = true;
+      b.nextRepeatAt = now + REPEAT_MS;
+    }
+  }
+
+  return step;
 }
 
-void clamp(int &v, int mn, int mx) {
+void clampInt(int &v, int mn, int mx) {
   if (v < mn) v = mn;
   if (v > mx) v = mx;
 }
 
+// EEPROM wear reduction: update writes only if different
 void saveIfChanged(int addr, int oldv, int newv, int offset = 0) {
   int storedOld = oldv + offset;
   int storedNew = newv + offset;
-  if (storedOld != storedNew) EEPROM.write(addr, (byte)storedNew);
+  if (storedOld != storedNew) EEPROM.update(addr, (byte)storedNew);
 }
 
-// -------------------- LCD update (ALWAYS REFRESHES CORRECTLY) --------------------
+// -------------------- LCD update --------------------
 void updateLCD() {
-
   lcd.setCursor(0, 0);
   if (haveValidReading) {
     lcd.print("T:");
@@ -157,22 +176,27 @@ void setup() {
   digitalWrite(RELAY1, HIGH);
   digitalWrite(RELAY2, HIGH);
 
-  bTup.begin();
-  bTdn.begin();
-  bHup.begin();
-  bHdn.begin();
+  // IMPORTANT for your wiring: external pulldown -> plain INPUT (no internal pullup!)
+  pinMode(BTN_T_UP,   INPUT);
+  pinMode(BTN_T_DOWN, INPUT);
+  pinMode(BTN_H_UP,   INPUT);
+  pinMode(BTN_H_DOWN, INPUT);
 
   dht.begin();
-  delay(3000);
+  delay(1500);
 
   byte vT = EEPROM.read(EEPROM_T_ADDR);
   byte vH = EEPROM.read(EEPROM_H_ADDR);
 
-  T_set = (int)vT - T_OFFSET;
-  H_set = vH;
+  // sanity checks (avoid 255 -> nonsense)
+  if (vT <= (byte)(T_MAX + T_OFFSET)) T_set = (int)vT - T_OFFSET;
+  else T_set = 25;
 
-  clamp(T_set, T_MIN, T_MAX);
-  clamp(H_set, H_MIN, H_MAX);
+  if (vH <= 100) H_set = (int)vH;
+  else H_set = 55;
+
+  clampInt(T_set, T_MIN, T_MAX);
+  clampInt(H_set, H_MIN, H_MAX);
 
   updateLCD();
 }
@@ -181,27 +205,22 @@ void setup() {
 void loop() {
   unsigned long now = millis();
 
-  // -------------------- BUTTONS --------------------
-  bTup.read();
-  bTdn.read();
-  bHup.read();
-  bHdn.read();
-
   int oldT = T_set;
   int oldH = H_set;
 
-  if (handleButton(stTup, bTup.isPressed(), now)) T_set++;
-  if (handleButton(stTdn, bTdn.isPressed(), now)) T_set--;
-  if (handleButton(stHup, bHup.isPressed(), now)) H_set++;
-  if (handleButton(stHdn, bHdn.isPressed(), now)) H_set--;
+  // Buttons
+  if (processButton(bTup, now)) T_set++;
+  if (processButton(bTdn, now)) T_set--;
+  if (processButton(bHup, now)) H_set++;
+  if (processButton(bHdn, now)) H_set--;
 
-  clamp(T_set, T_MIN, T_MAX);
-  clamp(H_set, H_MIN, H_MAX);
+  clampInt(T_set, T_MIN, T_MAX);
+  clampInt(H_set, H_MIN, H_MAX);
 
   saveIfChanged(EEPROM_T_ADDR, oldT, T_set, T_OFFSET);
   saveIfChanged(EEPROM_H_ADDR, oldH, H_set);
 
-  // -------------------- SENSOR READ --------------------
+  // Sensor read
   if (now - lastSensor >= SENSOR_MS) {
     float t = dht.readTemperature();
     float h = dht.readHumidity();
@@ -213,17 +232,13 @@ void loop() {
     } else {
       haveValidReading = false;
     }
-
     lastSensor = now;
   }
 
-  // -------------------- PROCESSING --------------------
+  // Relay processing
   if (now - lastProcess >= PROCESS_MS) {
     bool relay = false;
-
-    if (haveValidReading) {
-      relay = (curT > T_set) || (curH > H_set);
-    }
+    if (haveValidReading) relay = (curT > T_set) || (curH > H_set);
 
     digitalWrite(RELAY1, relay ? LOW : HIGH);
     digitalWrite(RELAY2, relay ? LOW : HIGH);
@@ -231,7 +246,7 @@ void loop() {
     lastProcess = now;
   }
 
-  // -------------------- LCD UPDATE --------------------
+  // LCD update
   if (now - lastLCD >= LCD_MS) {
     updateLCD();
     lastLCD = now;
