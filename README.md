@@ -2,6 +2,8 @@
 
 <img width="800" height="677" alt="Designer" src="https://github.com/user-attachments/assets/1f6c9440-8e78-48ed-bddb-1785dc36e684" />
 
+<img width="800" height="677" alt="image" src="https://github.com/user-attachments/assets/cd992089-b05d-4779-87a3-a25ff39baac4" />
+
 A modern temperature and humidity controller for cooling systems, built on Arduino Nano with updated libraries. Provides stable DHT11 readings, flicker‑free LCD output, relay control, EEPROM‑saved setpoints, and reliable sequential timing. Designed for beginners reviving the older Arduino project.
 
 <img width="800" height="677" alt="image" src="https://github.com/user-attachments/assets/58ba843e-809a-4ae6-b3f9-71b7cf7af34e" />
