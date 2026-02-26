@@ -1,7 +1,8 @@
 # Temperature-Humidity-Control-THC-
 
+<p><a href="https://www.youtube.com/shorts/djUbr9WUUEY">
 <img width="800" height="677" alt="Designer" src="https://github.com/user-attachments/assets/1f6c9440-8e78-48ed-bddb-1785dc36e684" />
-
+</a></p>
 <img width="800" height="677" alt="image" src="https://github.com/user-attachments/assets/cd992089-b05d-4779-87a3-a25ff39baac4" />
 
 <img width="800" height="677" alt="relay_opto_relay_schematic_padded_2x_label_up" src="https://github.com/user-attachments/assets/b2a79d0b-ba43-4a5f-b1a6-901a26f3bb1f" />
