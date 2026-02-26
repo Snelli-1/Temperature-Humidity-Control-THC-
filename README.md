@@ -8,6 +8,9 @@ A modern temperature and humidity controller for cooling systems, built on Ardui
 
 <img width="800" height="677" alt="image" src="https://github.com/user-attachments/assets/58ba843e-809a-4ae6-b3f9-71b7cf7af34e" />
 
+<img width="1360" height="790" alt="relay_opto_relay_schematic_padded_2x_label_up" src="https://github.com/user-attachments/assets/b2a79d0b-ba43-4a5f-b1a6-901a26f3bb1f" />
+
+
 Here are the Library Manager names to search + the preferred official links:
 
 Built-in (no install needed)
