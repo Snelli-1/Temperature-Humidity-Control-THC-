@@ -7,7 +7,7 @@
 
 Optocoupler‑isolated MCU relay driver with flyback diode and motor transient suppression.
 
-<img width="800" height="677" alt="relay_opto_relay_schematic_padded_2x_label_up" src="https://github.com/user-attachments/assets/b2a79d0b-ba43-4a5f-b1a6-901a26f3bb1f" />
+<img width="800" height="677" alt="relay_opto_relay_schematic_padded_2x_label_up" src="https://github.com/user-attachments/assets/963dcb07-b3d7-49f9-b348-4454f027c5e8" />
 
 A modern temperature and humidity controller for cooling systems, built on Arduino Nano with updated libraries. Provides stable DHT11 readings, flicker‑free LCD output, relay control, EEPROM‑saved setpoints, and reliable sequential timing. Designed for beginners reviving the older Arduino project.
 
