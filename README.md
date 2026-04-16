@@ -224,7 +224,7 @@ Check if valid T/H values appear
 
 Verify relay wiring
 
-Remember: active‑LOW
+Remember: active‑high
 
 Upload errors:
 
